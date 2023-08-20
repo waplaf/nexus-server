@@ -1,0 +1,102 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int         @id @default(autoincrement())
+  username    String
+  email       String      @unique
+  phone       String?     @db.VarChar(9)
+  state       Boolean     @default(false)
+  password    String      @db.VarChar(100)
+  avatar      String?     @db.LongText
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @default(now())
+  ExpirePay   DateTime    @default(now())
+  Draft       Draft[]
+  userPay     Pay[]
+  idAffiliate Affiliate[]
+  Invite      Invite?     @relation(fields: [inviteId], references: [id])
+  inviteId    Int?
+  amountId    Cashout[]
+
+  @@map("users")
+}
+
+model Draft {
+  id        Int      @id @default(autoincrement())
+  title     String
+  value     String   @db.LongText
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  category  String   @default("chat") @db.VarChar(20)
+  idUser    User     @relation(fields: [userId], references: [id])
+  userId    Int
+  Pay       Pay?     @relation(fields: [payId], references: [id])
+  payId     Int?
+
+  @@map("drafts")
+}
+
+model Pay {
+  id           Int      @id @default(autoincrement())
+  User         User?    @relation(fields: [userId], references: [id])
+  userId       Int?
+  price        Float
+  method       String   @default("M-Pesa")
+  reference    String   @db.VarChar(50)
+  number       String   @db.VarChar(50)
+  plan         String   @default("Básico") @db.VarChar(20)
+  createdAt    DateTime @default(now())
+  dateExpireAt DateTime @default(now())
+  updatedAt    DateTime @default(now())
+  draftId      Draft[]
+
+  @@map("payments")
+}
+
+model Affiliate {
+  id        Int      @id @default(autoincrement())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @default(now())
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+  idInvites Invite[]
+
+  @@map("affiliates")
+}
+
+model Invite {
+  id          Int        @id @default(autoincrement())
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @default(now())
+  Affiliate   Affiliate? @relation(fields: [affiliateId], references: [id])
+  affiliateId Int?
+  idInvited   User[]
+}
+
+model Cashout {
+  id        Int      @id @default(autoincrement())
+  amount    Float
+  reference String   @db.VarChar(20)
+  User      User?    @relation(fields: [userId], references: [id])
+  userId    Int?
+  phone     Int
+  method    String   @default("M-Pesa")
+  createdAt DateTime @default(now())
+
+  @@map("cashout")
+}
+
+model Recovery {
+  id        Int      @id @default(autoincrement())
+  email     String   @db.VarChar(51)
+  code      String   @db.VarChar(20)
+  createdAt DateTime @default(now())
+  expireAt  DateTime @default(now())
+}
